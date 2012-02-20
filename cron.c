@@ -46,7 +46,7 @@ usage() {
 #if DEBUGGING
 	char **dflags;
 
-	fprintf(stderr, "usage:  %s [-x [", ProgramName);
+	fprintf(stderr, "usage:  %s [-j jitter] [-J rootjitter] [-x [", ProgramName);
 	for(dflags = DebugFlagNames; *dflags; dflags++)
 		fprintf(stderr, "%s%s", *dflags, dflags[1] ? "," : "]");
 	fprintf(stderr, "]\n");
@@ -464,15 +464,28 @@ parse_args(argc, argv)
 	int	argc;
 	char	*argv[];
 {
+	char	*endp;
 	int	argch;
 
 	stay_foreground = 0;
         lsbsysinit_mode = 0;
 
-	while (EOF != (argch = getopt(argc, argv, "lfx:L:"))) {
+	while (EOF != (argch = getopt(argc, argv, "j:J:lfx:L:"))) {
 		switch (argch) {
 		default:
 			usage();
+		case 'j':
+			Jitter = strtoul(optarg, &endp, 10);
+			if (*optarg == '\0' || *endp != '\0' || Jitter > 60)
+				errx(ERROR_EXIT,
+				     "bad value for jitter: %s", optarg);
+			break;
+		case 'J':
+			RootJitter = strtoul(optarg, &endp, 10);
+			if (*optarg == '\0' || *endp != '\0' || RootJitter > 60)
+				errx(ERROR_EXIT,
+				     "bad value for root jitter: %s", optarg);
+			break;
 		case 'f':
 			stay_foreground = 1;
 			break;

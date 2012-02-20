@@ -291,6 +291,8 @@ char	*DowNames[] = {
 
 char	*ProgramName;
 int	LineNumber;
+unsigned Jitter,
+	RootJitter;
 time_t	StartTime;
 time_min timeRunning;
 time_min virtualTime;
@@ -317,6 +319,8 @@ extern	char	*copyright[],
 extern  int     lsbsysinit_mode;
 extern  int     log_level;
 extern	int	LineNumber;
+extern unsigned	Jitter,
+		RootJitter;
 extern	time_t	StartTime;
 extern  time_min timeRunning;
 extern  time_min virtualTime;
