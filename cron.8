@@ -23,6 +23,8 @@
 cron \- daemon to execute scheduled commands (Vixie Cron)
 .SH SYNOPSIS
 cron
+.RN [ -j ] jitter
+.RB [ -J ] rootjitter
 .RB [ -f ]
 .RB [ -l ]
 .RB [ -L
@@ -33,6 +35,21 @@ is started automatically from /etc/init.d on entering multi-user
 runlevels.
 .SH OPTIONS
 .TP 8
+.B -j  jitter
+Enable time jitter.
+Prior to executing commands, will sleep a random number of seconds in the 
+range from 0 to \fIjitter\fR. This will not affect superuser jobs (see -J). 
+A value for \fIjitter\fR must be between 0 and 60 inclusive.
+Default is 0, which effectively disables time jitter.
+
+This option can help to smooth down system load spikes during
+moments when a lot of jobs are likely to start at once, e.g.,
+at the beginning of the first minute of each hour.
+.TP
+.B -J rootjitter
+Enable time jitter for superuser jobs.
+The same as -j except that it will affect jobs run by the superuser only.
+.TP
 .B -f
 Stay in foreground mode, don't daemonize.
 .TP
