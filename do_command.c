@@ -264,6 +264,9 @@ child_process(e, u)
 			srandom(getpid());
 			sleep(random() % Jitter);
 		}
+		if (e->second != 0) {
+			sleep(e->second);
+		}
 
 		/* write a log message.  we've waited this long to do it
 		 * because it was not until now that we knew the PID that

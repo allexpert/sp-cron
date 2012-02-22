@@ -25,17 +25,16 @@ static char rcsid[] = "$Id: entry.c,v 2.12 1994/01/17 03:20:37 vixie Exp $";
  * vix 30dec86 [written]
  */
 
-
 #include "cron.h"
 
 
 typedef	enum ecode {
 	e_none, e_minute, e_hour, e_dom, e_month, e_dow,
-	e_cmd, e_timespec, e_username
+	e_cmd, e_timespec, e_username, e_second, e_miss_space
 } ecode_e;
 
 static char	get_list __P((bitstr_t *, int, int, char *[], int, FILE *)),
-		get_range __P((bitstr_t *, int, int, char *[], int, FILE *)),
+	get_range __P((bitstr_t *, int, int, char *[], int, FILE *)),
 		get_number __P((int *, int, char *[], int, FILE *));
 static int	set_element __P((bitstr_t *, int, int, int));
 
@@ -50,6 +49,8 @@ static char *ecodes[] =
 		"bad command",
 		"bad time specifier",
 		"bad username",
+		"bad sleep seconds",
+		"missing space",
 	};
 
 
@@ -125,6 +126,7 @@ load_entry(file, error_func, pw, envp)
 		if (!strcmp("reboot", cmd)) {
 			e->flags |= WHEN_REBOOT;
 		} else if (!strcmp("yearly", cmd) || !strcmp("annually", cmd)){
+			e->second= 0;
 			bit_set(e->minute, 0);
 			bit_set(e->hour, 0);
 			bit_set(e->dom, 0);
@@ -132,6 +134,7 @@ load_entry(file, error_func, pw, envp)
 			bit_nset(e->dow, 0, (LAST_DOW-FIRST_DOW+1));
                         e->flags |= DOW_STAR; 
 		} else if (!strcmp("monthly", cmd)) {
+			e->second= 0;
 			bit_set(e->minute, 0);
 			bit_set(e->hour, 0);
 			bit_set(e->dom, 0);
@@ -139,6 +142,7 @@ load_entry(file, error_func, pw, envp)
 			bit_nset(e->dow, 0, (LAST_DOW-FIRST_DOW+1));
                         e->flags |= DOW_STAR;
 		} else if (!strcmp("weekly", cmd)) {
+			e->second= 0;
 			bit_set(e->minute, 0);
 			bit_set(e->hour, 0);
 			bit_nset(e->dom, 0, (LAST_DOM-FIRST_DOM+1));
@@ -146,12 +150,14 @@ load_entry(file, error_func, pw, envp)
 			bit_nset(e->month, 0, (LAST_MONTH-FIRST_MONTH+1));
 			bit_nset(e->dow, 0,0);
 		} else if (!strcmp("daily", cmd) || !strcmp("midnight", cmd)) {
+			e->second= 0;
 			bit_set(e->minute, 0);
 			bit_set(e->hour, 0);
 			bit_nset(e->dom, 0, (LAST_DOM-FIRST_DOM+1));
 			bit_nset(e->month, 0, (LAST_MONTH-FIRST_MONTH+1));
 			bit_nset(e->dow, 0, (LAST_DOW-FIRST_DOW+1));
 		} else if (!strcmp("hourly", cmd)) {
+			e->second= 0;
 			bit_set(e->minute, 0);
 			bit_nset(e->hour, 0, (LAST_HOUR-FIRST_HOUR+1));
 			bit_nset(e->dom, 0, (LAST_DOM-FIRST_DOM+1));
@@ -165,10 +171,32 @@ load_entry(file, error_func, pw, envp)
 	} else {
 		Debug(DPARS, ("load_entry()...about to parse numerics\n"))
 
+		if (ch == '+') {
+			/* eat the plus char */
+			ch = get_char(file);
+			if (ch == EOF) {
+				ecode = e_second;
+				goto eof;
+			}
+
+			/* get the sleep seconds */
+			ch = get_number(&e->second, 0, PPC_NULL, ch, file);
+			if (ch == EOF || e->second < 0 || e->second >= SECONDS_PER_MINUTE) {
+				ecode = e_second;
+				goto eof;
+			}
+			/* eat the empty char */
+			ch = get_char(file);
+			if (ch == EOF) {
+				ecode = e_miss_space;
+				goto eof;
+			}
+		}
+
 		if (ch == '*')
 			e->flags |= MIN_STAR;
 		ch = get_list(e->minute, FIRST_MINUTE, LAST_MINUTE,
-			      PPC_NULL, ch, file);
+					  PPC_NULL, ch, file);
 		if (ch == EOF) {
 			ecode = e_minute;
 			goto eof;
@@ -360,7 +388,7 @@ load_entry(file, error_func, pw, envp)
 static char
 get_list(bits, low, high, names, ch, file)
 	bitstr_t	*bits;		/* one bit per flag, default=FALSE */
-	int		low, high;	/* bounds, impl. offset for bitstr */
+	int		low, high;	    /* bounds, impl. offset for bitstr */
 	char		*names[];	/* NULL or *[] of names for these elements */
 	int		ch;		/* current character being processed */
 	FILE		*file;		/* file being read */

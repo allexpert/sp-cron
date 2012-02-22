@@ -169,6 +169,12 @@ typedef	struct _entry {
 	gid_t		gid;
 	char		**envp;
 	char		*cmd;
+	int	        second; /* added by alexey:
+						   Amount of seconds to sleep before starting a job;
+						   has the same function as -j jitter. Unlike the latter
+						   is not random but defined explicitly in crontab per 
+						   job as follows:
+						   +<seconds> <minute settings> <hour settings> ...*/
 	bitstr_t	bit_decl(minute, MINUTE_COUNT);
 	bitstr_t	bit_decl(hour,   HOUR_COUNT);
 	bitstr_t	bit_decl(dom,    DOM_COUNT);
