@@ -13,6 +13,12 @@
 # * Send bug reports, bug fixes, enhancements, requests, flames, etc., and
 # * I'll try to keep a version up to date.  I can be reached as follows:
 # * Paul Vixie          <paul@vix.com>          uunet!decwrl!vixie!paul
+# *
+# * | Modified by Alexey (allexpert.no) 02.2012
+# * | Added jitter support (like in FreeBSD cron)
+# * | Added explicit job start delay in seconds; modified crontab looks like:
+# * | +<0-59> mm hh dom mon dow command
+# * | 
 # */
 
 Vixie Cron V3.0
